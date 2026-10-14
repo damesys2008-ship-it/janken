@@ -1,94 +1,121 @@
-from players import joueurs, creer_joueur, afficher_joueurs
-from Tournoi import creer_tournoi
 import match_morpion
 import match_ppc
+from players import afficher_joueurs, creer_joueur
+from tournoi import TournoiAnnule, creer_tournoi
+
+LARGEUR_MENU = 40
+LARGEUR_BANDEAU = 30
+DECALAGE_TITRE_MENU = 15
+
 
 # ------------------------------
-# Tournoi / stats              |
+# Affichage                    |
 # ------------------------------
 
-def reprendre_tournoi():
+def afficher_debut_bandeau(titre):
+    print("\n" + "=" * LARGEUR_BANDEAU)
+    print(titre)
+    print("=" * LARGEUR_BANDEAU)
+
+
+def afficher_fin_bandeau():
+    print("=" * LARGEUR_BANDEAU + "\n")
+
+
+# ------------------------------
+# Actions du menu              |
+# ------------------------------
+
+def lancer_creation_tournoi(joueurs):
+    try:
+        tournoi = creer_tournoi(joueurs)
+    except TournoiAnnule as annulation:
+        print(annulation)
+        return
+    print(f"Tournoi '{tournoi['nom']}' créé et prêt pour le tournoi !")
+
+
+def reprendre_tournoi(joueurs):
     print("Reprendre tournoi (squelette)")
 
-def historique_tournoi():
+
+def historique_tournoi(joueurs):
     print("Historique tournoi (squelette)")
 
-def classement_elo():
+
+def classement_elo(joueurs):
     if not joueurs:
         print("Aucun joueur créé.")
         return
-    joueurs_tries = sorted(joueurs, key=lambda j: j['elo'], reverse=True)
-    print("\n==============================")
-    print("        CLASSEMENT ELO")
-    print("==============================")
+    joueurs_tries = sorted(joueurs, key=lambda joueur: joueur['elo'], reverse=True)
+    afficher_debut_bandeau("        CLASSEMENT ELO")
     print(f"{'Nom':<15} {'ELO':<6} {'Victoires':<9} {'Défaites':<8}")
-    print("------------------------------")
-    for j in joueurs_tries:
-        print(f"{j['nom']:<15} {j['elo']:<6} {j['victoires']:<9} {j['defaites']:<8}")
-    print("==============================\n")
+    print("-" * LARGEUR_BANDEAU)
+    for joueur in joueurs_tries:
+        print(
+            f"{joueur['nom']:<15} {joueur['elo']:<6}"
+            f" {joueur['victoires']:<9} {joueur['defaites']:<8}"
+        )
+    afficher_fin_bandeau()
 
-def stats_joueur():
-    afficher_joueurs()
 
-def afficher_regles():
-    print("\n==============================")
-    print("          RÈGLES DU JEU")
-    print("==============================")
+def afficher_regles(joueurs):
+    afficher_debut_bandeau("          RÈGLES DU JEU")
     print("Le joueur doit effectuer des parties stratégiques liées au principe du jeu.")
     print("Il se doit de remporter trois manches pour gagner le match.")
     print("Chaque action peut avoir un impact positif ou négatif sur le déroulement de la partie.")
     print("Le match se terminera lorsque les conditions de victoires ou défaites ont été atteintes.")
-    print("==============================\n")
+    afficher_fin_bandeau()
+
 
 # ------------------------------
 # Menu principal               |
 # ------------------------------
 
+# Chaque option : (libellé affiché, action qui reçoit la liste des joueurs).
+# Le numéro affiché est la position dans cette liste, en partant de 1.
+OPTIONS_MENU = [
+    ("Creer un joueur", creer_joueur),
+    ("Creer un tournoi", lancer_creation_tournoi),
+    ("Reprendre un tournoi", reprendre_tournoi),
+    ("Historique", historique_tournoi),
+    ("Classement ELO", classement_elo),
+    ("Statistiques joueur", afficher_joueurs),
+    ("Regles", afficher_regles),
+    ("Jouer PPC", match_ppc.jouer_match_ppc),
+    ("Jouer Morpion", match_morpion.jouer_match_morpion),
+]
+LIBELLE_QUITTER = "Quitter"
+CHOIX_QUITTER = str(len(OPTIONS_MENU) + 1)
+ACTIONS_PAR_CHOIX = {
+    str(numero): action
+    for numero, (_, action) in enumerate(OPTIONS_MENU, start=1)
+}
+
+
 def afficher_menu():
-    print("\n" + "="*40)
-    print(" " * 15 + "JANKEN")
-    print("="*40)
-    print("1. Creer un joueur")
-    print("2. Creer un tournoi")
-    print("3. Reprendre un tournoi")
-    print("4. Historique")
-    print("5. Classement ELO")
-    print("6. Statistiques joueur")
-    print("7. Regles")
-    print("8. Jouer PPC")
-    print("9. Jouer Morpion")
-    print("10. Quitter") 
+    print("\n" + "=" * LARGEUR_MENU)
+    print(" " * DECALAGE_TITRE_MENU + "JANKEN")
+    print("=" * LARGEUR_MENU)
+    for numero, (libelle, _) in enumerate(OPTIONS_MENU, start=1):
+        print(f"{numero}. {libelle}")
+    print(f"{CHOIX_QUITTER}. {LIBELLE_QUITTER}")
+
 
 def main():
+    joueurs = []
     while True:
         afficher_menu()
         choix = input("Votre choix : ")
 
-        if choix == "1":
-            creer_joueur()
-        elif choix == "2":
-            tournoi = creer_tournoi()
-            if tournoi:
-                print(f"Tournoi '{tournoi['nom']}' créé et prêt pour le tournoi !")
-        elif choix == "3":
-            reprendre_tournoi()
-        elif choix == "4":
-            historique_tournoi()
-        elif choix == "5":
-            classement_elo()
-        elif choix == "6":
-            stats_joueur()
-        elif choix == "7":
-            afficher_regles()
-        elif choix == "8":
-            match_ppc.jouer_match_ppc()
-        elif choix == "9":
-            match_morpion.jouer_match_morpion()
-        elif choix == "10":
+        if choix == CHOIX_QUITTER:
             print("Au revoir ")
-            break
-        else:
+            return
+        if choix not in ACTIONS_PAR_CHOIX:
             print("Choix invalide, réessaye")
+            continue
+        ACTIONS_PAR_CHOIX[choix](joueurs)
+
 
 if __name__ == "__main__":
     main()

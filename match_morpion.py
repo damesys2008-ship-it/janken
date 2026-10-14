@@ -1,5 +1,8 @@
-from players import joueurs
-from regles_morpion import trouver_gagnant
+from players import JOUEURS_MINIMUM_PAR_MATCH
+from regles_morpion import CASE_VIDE, NOMBRE_DE_CASES, trouver_gagnant
+
+MARQUE_PREMIER_JOUEUR = "X"
+MARQUE_SECOND_JOUEUR = "O"
 
 
 def afficher_grille(grille):
@@ -21,35 +24,56 @@ def annoncer_fin(grille, resultat):
     print("==============================\n")
 
 
-def jouer_match_morpion():
-    if len(joueurs) < 2:
-        print("Il faut au moins 2 joueurs.")
-        return
+def marque_suivante(marque):
+    """Renvoie la marque du joueur qui joue après celle donnée."""
+    if marque == MARQUE_PREMIER_JOUEUR:
+        return MARQUE_SECOND_JOUEUR
+    return MARQUE_PREMIER_JOUEUR
 
-    grille = [" "] * 9
-    joueur_actuel = "X"
-    noms = [joueurs[0]["nom"], joueurs[1]["nom"]]
 
+def demander_case(grille, nom):
+    """Affiche la grille et redemande tant que la case choisie n'est pas libre.
+
+    Renvoie l'indice de la case (0 à NOMBRE_DE_CASES - 1).
+    """
     while True:
         afficher_grille(grille)
         try:
-            case = int(input(f"{noms[0 if joueur_actuel=='X' else 1]}, choisis une case (1-9) : ")) - 1
+            case = int(input(f"{nom}, choisis une case (1-{NOMBRE_DE_CASES}) : ")) - 1
         except ValueError:
             print("Choix invalide.")
             continue
 
-        if case < 0 or case > 8 or grille[case] != " ":
+        if case < 0 or case >= NOMBRE_DE_CASES or grille[case] != CASE_VIDE:
             print("Case invalide ou déjà prise.")
             continue
 
-        grille[case] = joueur_actuel
+        return case
+
+
+def jouer_match_morpion(joueurs):
+    if len(joueurs) < JOUEURS_MINIMUM_PAR_MATCH:
+        print(f"Il faut au moins {JOUEURS_MINIMUM_PAR_MATCH} joueurs.")
+        return
+
+    grille = [CASE_VIDE] * NOMBRE_DE_CASES
+    noms_par_marque = {
+        MARQUE_PREMIER_JOUEUR: joueurs[0]["nom"],
+        MARQUE_SECOND_JOUEUR: joueurs[1]["nom"],
+    }
+    marque_actuelle = MARQUE_PREMIER_JOUEUR
+
+    while True:
+        nom_actuel = noms_par_marque[marque_actuelle]
+        case = demander_case(grille, nom_actuel)
+        grille[case] = marque_actuelle
 
         if trouver_gagnant(grille) is not None:
-            annoncer_fin(grille, f"Le gagnant est : {noms[0 if joueur_actuel=='X' else 1]}")
+            annoncer_fin(grille, f"Le gagnant est : {nom_actuel}")
             return
 
-        if " " not in grille:
+        if CASE_VIDE not in grille:
             annoncer_fin(grille, "Égalité !")
             return
 
-        joueur_actuel = "O" if joueur_actuel=="X" else "X"
+        marque_actuelle = marque_suivante(marque_actuelle)

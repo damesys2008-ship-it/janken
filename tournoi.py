@@ -1,64 +1,82 @@
-# Tournoi.py
+JEUX_VALIDES = ["ppc", "morpion"]
+FORMATS_VALIDES = ["round-robin", "elimination directe"]
+PARTICIPANTS_MINIMUM = 2
 
-from players import joueurs
 
-def creer_tournoi():
+class TournoiAnnule(Exception):
+    """Levée quand la création du tournoi est annulée ; le message dit pourquoi."""
+
+
+def creer_tournoi(joueurs):
+    """Demande les infos au clavier et renvoie le tournoi créé."""
     if not joueurs:
-        print("Aucun joueur créé, créez des joueurs avant de lancer un tournoi.")
-        return
+        raise TournoiAnnule("Aucun joueur créé, créez des joueurs avant de lancer un tournoi.")
 
     print("\n===== Création d'un tournoi =====")
     nom = input("Nom du tournoi : ")
+    jeu = demander_jeu()
+    format_tournoi = demander_format()
+    participants = choisir_participants(joueurs)
 
-    # Choix du jeu
-    jeu = input("Choisir le jeu (PPC/Morpion) : ").strip()
-    if jeu.lower() not in ["ppc", "morpion"]:
-        print("Choix invalide, tournoi annulé.")
-        return
-
-    # Choix du format
-    format_tournoi = input("Format du tournoi (Round-Robin/Elimination directe) : ").strip()
-    if format_tournoi.lower() not in ["round-robin", "elimination directe"]:
-        print("Format invalide, tournoi annulé.")
-        return
-
-    # Choix des participants
-    print("\nJoueurs disponibles :")
-    for i, j in enumerate(joueurs):
-        print(f"{i+1}. {j['nom']}")
-
-    participants = []
-    try:
-        nb = int(input("Nombre de participants : "))
-    except ValueError:
-        print("Nombre invalide")
-        return
-
-    if nb < 2 or nb > len(joueurs):
-        print("Nombre de participants invalide")
-        return
-
-    for _ in range(nb):
-        try:
-            i = int(input("Choisir le numéro d'un joueur : ")) - 1
-        except ValueError:
-            print("Numéro invalide")
-            continue
-
-        if i < 0 or i >= len(joueurs) or joueurs[i] in participants:
-            print("Choix invalide, joueur déjà choisi ou numéro incorrect")
-        else:
-            participants.append(joueurs[i])
-
-    # Créer le tournoi
-    tournoi = {
+    print(f"\nTournoi '{nom}' créé avec {len(participants)} participants !\n")
+    return {
         "nom": nom,
         "jeu": jeu,
         "format": format_tournoi,
         "participants": participants,
         "matchs": [],
-        "termine": False
+        "termine": False,
     }
 
-    print(f"\nTournoi '{nom}' créé avec {len(participants)} participants !\n")
-    return tournoi
+
+def demander_jeu():
+    jeu = input("Choisir le jeu (PPC/Morpion) : ").strip()
+    if jeu.lower() not in JEUX_VALIDES:
+        raise TournoiAnnule("Choix invalide, tournoi annulé.")
+    return jeu
+
+
+def demander_format():
+    format_tournoi = input("Format du tournoi (Round-Robin/Elimination directe) : ").strip()
+    if format_tournoi.lower() not in FORMATS_VALIDES:
+        raise TournoiAnnule("Format invalide, tournoi annulé.")
+    return format_tournoi
+
+
+def choisir_participants(joueurs):
+    """Affiche les joueurs puis demande combien de participants et lesquels."""
+    print("\nJoueurs disponibles :")
+    for position, joueur in enumerate(joueurs, start=1):
+        print(f"{position}. {joueur['nom']}")
+
+    nombre = demander_nombre_participants(len(joueurs))
+
+    participants = []
+    for _ in range(nombre):
+        ajouter_participant(joueurs, participants)
+    return participants
+
+
+def demander_nombre_participants(nombre_joueurs):
+    try:
+        nombre = int(input("Nombre de participants : "))
+    except ValueError:
+        raise TournoiAnnule("Nombre invalide")
+
+    if nombre < PARTICIPANTS_MINIMUM or nombre > nombre_joueurs:
+        raise TournoiAnnule("Nombre de participants invalide")
+    return nombre
+
+
+def ajouter_participant(joueurs, participants):
+    """Demande un numéro de joueur et l'ajoute ; une saisie invalide consomme la tentative."""
+    try:
+        indice = int(input("Choisir le numéro d'un joueur : ")) - 1
+    except ValueError:
+        print("Numéro invalide")
+        return
+
+    if indice < 0 or indice >= len(joueurs) or joueurs[indice] in participants:
+        print("Choix invalide, joueur déjà choisi ou numéro incorrect")
+        return
+    participants.append(joueurs[indice])
