@@ -16,6 +16,7 @@ def demander_choix(nom_joueur):
 
 
 def annoncer_resultat(premier, second, resultat):
+    """Affiche l'égalité ou le nom du gagnant."""
     if resultat == EGALITE:
         print("Égalité !")
     elif resultat == PREMIER_GAGNE:
@@ -25,6 +26,7 @@ def annoncer_resultat(premier, second, resultat):
 
 
 def jouer_match_ppc(joueurs):
+    """Fait s'affronter deux joueurs tirés au hasard à pierre-feuille-ciseaux."""
     if len(joueurs) < JOUEURS_MINIMUM_PAR_MATCH:
         print(f"Il faut au moins {JOUEURS_MINIMUM_PAR_MATCH} joueurs pour jouer.")
         return

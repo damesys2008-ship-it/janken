@@ -30,6 +30,7 @@ def creer_tournoi(joueurs):
 
 
 def demander_jeu():
+    """Demande le jeu du tournoi et renvoie la saisie ; lève TournoiAnnule si inconnu."""
     jeu = input("Choisir le jeu (PPC/Morpion) : ").strip()
     if jeu.lower() not in JEUX_VALIDES:
         raise TournoiAnnule("Choix invalide, tournoi annulé.")
@@ -37,6 +38,7 @@ def demander_jeu():
 
 
 def demander_format():
+    """Demande le format du tournoi ; lève TournoiAnnule s'il est inconnu."""
     format_tournoi = input("Format du tournoi (Round-Robin/Elimination directe) : ").strip()
     if format_tournoi.lower() not in FORMATS_VALIDES:
         raise TournoiAnnule("Format invalide, tournoi annulé.")
@@ -58,10 +60,11 @@ def choisir_participants(joueurs):
 
 
 def demander_nombre_participants(nombre_joueurs):
+    """Demande combien de participants ; lève TournoiAnnule si le nombre est invalide."""
     try:
         nombre = int(input("Nombre de participants : "))
-    except ValueError:
-        raise TournoiAnnule("Nombre invalide")
+    except ValueError as erreur:
+        raise TournoiAnnule("Nombre invalide") from erreur
 
     if nombre < PARTICIPANTS_MINIMUM or nombre > nombre_joueurs:
         raise TournoiAnnule("Nombre de participants invalide")

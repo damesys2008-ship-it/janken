@@ -13,12 +13,14 @@ DECALAGE_TITRE_MENU = 15
 # ------------------------------
 
 def afficher_debut_bandeau(titre):
+    """Affiche le haut d'un bandeau avec son titre."""
     print("\n" + "=" * LARGEUR_BANDEAU)
     print(titre)
     print("=" * LARGEUR_BANDEAU)
 
 
 def afficher_fin_bandeau():
+    """Affiche le bas d'un bandeau."""
     print("=" * LARGEUR_BANDEAU + "\n")
 
 
@@ -27,6 +29,7 @@ def afficher_fin_bandeau():
 # ------------------------------
 
 def lancer_creation_tournoi(joueurs):
+    """Crée un tournoi, ou affiche pourquoi il est annulé."""
     try:
         tournoi = creer_tournoi(joueurs)
     except TournoiAnnule as annulation:
@@ -36,14 +39,17 @@ def lancer_creation_tournoi(joueurs):
 
 
 def reprendre_tournoi(joueurs):
+    """Squelette : reprendre un tournoi n'est pas encore disponible."""
     print("Reprendre tournoi (squelette)")
 
 
 def historique_tournoi(joueurs):
+    """Squelette : l'historique des tournois n'est pas encore disponible."""
     print("Historique tournoi (squelette)")
 
 
 def classement_elo(joueurs):
+    """Affiche les joueurs classés par ELO décroissant."""
     if not joueurs:
         print("Aucun joueur créé.")
         return
@@ -60,6 +66,7 @@ def classement_elo(joueurs):
 
 
 def afficher_regles(joueurs):
+    """Affiche les règles du jeu."""
     afficher_debut_bandeau("          RÈGLES DU JEU")
     print("Le joueur doit effectuer des parties stratégiques liées au principe du jeu.")
     print("Il se doit de remporter trois manches pour gagner le match.")
@@ -94,6 +101,7 @@ ACTIONS_PAR_CHOIX = {
 
 
 def afficher_menu():
+    """Affiche le menu principal numéroté."""
     print("\n" + "=" * LARGEUR_MENU)
     print(" " * DECALAGE_TITRE_MENU + "JANKEN")
     print("=" * LARGEUR_MENU)
@@ -103,6 +111,7 @@ def afficher_menu():
 
 
 def main():
+    """Boucle du menu principal, jusqu'à ce que l'utilisateur quitte."""
     joueurs = []
     while True:
         afficher_menu()

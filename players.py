@@ -1,5 +1,3 @@
-# players.py
-
 ELO_INITIAL = 1000
 JOUEURS_MINIMUM_PAR_MATCH = 2
 
@@ -42,12 +40,12 @@ def demander_autre_joueur():
 
 def creer_joueur(joueurs):
     """Crée des joueurs humains et les ajoute à la liste, tant que l'utilisateur en veut."""
-    autre_joueur = True
-    while autre_joueur:
+    veut_ajouter_un_joueur = True
+    while veut_ajouter_un_joueur:
         nom = input("Nom du joueur : ")
         joueurs.append(construire_joueur(nom))
         print(f"Joueur {nom} créé avec succès.")
-        autre_joueur = demander_autre_joueur()
+        veut_ajouter_un_joueur = demander_autre_joueur()
 
 
 def afficher_joueurs(joueurs):
