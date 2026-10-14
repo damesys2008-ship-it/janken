@@ -1,6 +1,8 @@
+from elo import appliquer_resultat
 from players import JOUEURS_MINIMUM_PAR_MATCH
 from regles_morpion import CASE_VIDE, NOMBRE_DE_CASES, trouver_gagnant
 from resultats import EGALITE, PREMIER_GAGNE, SECOND_GAGNE, texte_resultat
+from tournoi import JEU_MORPION, PREMIER_TOUR
 
 MARQUE_PREMIER_JOUEUR = "X"
 MARQUE_SECOND_JOUEUR = "O"
@@ -87,9 +89,11 @@ def jouer_partie_morpion(joueur1, joueur2):
 
 
 def jouer_match_morpion(joueurs):
-    """Joue une partie de morpion entre les deux premiers joueurs."""
+    """Joue une partie entre les deux premiers joueurs et met à jour leurs statistiques."""
     if len(joueurs) < JOUEURS_MINIMUM_PAR_MATCH:
         print(f"Il faut au moins {JOUEURS_MINIMUM_PAR_MATCH} joueurs.")
         return
 
-    jouer_partie_morpion(joueurs[0], joueurs[1])
+    resultat = jouer_partie_morpion(joueurs[0], joueurs[1])
+    match = {"joueur1": joueurs[0], "joueur2": joueurs[1], "resultat": resultat, "tour": PREMIER_TOUR}
+    appliquer_resultat(match, JEU_MORPION)

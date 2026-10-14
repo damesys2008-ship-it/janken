@@ -73,9 +73,27 @@ class TestAfficherJoueurs(unittest.TestCase):
             afficher_joueurs(joueurs)
 
         self.assertIn(
-            "1. Alice | Victoires : 3 | Défaites : 1 | Parties jouées : 4",
+            "1. Alice | Victoires : 3 | Défaites : 1 | Parties jouées : 4 | Ratio : 75 %",
             sortie.getvalue(),
         )
+
+    def test_ratio_sans_partie_jouee(self):
+        joueurs = [{"nom": "Alice", "victoires": 0, "defaites": 0, "joues": 0}]
+        sortie = io.StringIO()
+
+        with contextlib.redirect_stdout(sortie):
+            afficher_joueurs(joueurs)
+
+        self.assertIn("Parties jouées : 0 | Ratio : N/A", sortie.getvalue())
+
+    def test_ratio_compte_les_nuls_comme_des_parties(self):
+        joueurs = [{"nom": "Alice", "victoires": 1, "defaites": 0, "joues": 2}]
+        sortie = io.StringIO()
+
+        with contextlib.redirect_stdout(sortie):
+            afficher_joueurs(joueurs)
+
+        self.assertIn("Ratio : 50 %", sortie.getvalue())
 
 
 if __name__ == "__main__":

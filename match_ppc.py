@@ -1,8 +1,10 @@
 import getpass
 import random
+from elo import appliquer_resultat
 from players import JOUEURS_MINIMUM_PAR_MATCH
 from regles_ppc import determiner_gagnant
 from resultats import texte_resultat
+from tournoi import JEU_PPC, PREMIER_TOUR
 
 CHOIX_PAR_TOUCHE = {"p": "pierre", "f": "feuille", "c": "ciseaux"}
 
@@ -31,10 +33,12 @@ def jouer_partie_ppc(joueur1, joueur2):
 
 
 def jouer_match_ppc(joueurs):
-    """Fait s'affronter deux joueurs tirés au hasard à pierre-feuille-ciseaux."""
+    """Fait s'affronter deux joueurs tirés au hasard et met à jour leurs statistiques."""
     if len(joueurs) < JOUEURS_MINIMUM_PAR_MATCH:
         print(f"Il faut au moins {JOUEURS_MINIMUM_PAR_MATCH} joueurs pour jouer.")
         return
 
     premier, second = random.sample(joueurs, 2)
-    jouer_partie_ppc(premier, second)
+    resultat = jouer_partie_ppc(premier, second)
+    match = {"joueur1": premier, "joueur2": second, "resultat": resultat, "tour": PREMIER_TOUR}
+    appliquer_resultat(match, JEU_PPC)

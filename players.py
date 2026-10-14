@@ -1,3 +1,5 @@
+from elo import texte_ratio
+
 ELO_INITIAL = 1000
 JOUEURS_MINIMUM_PAR_MATCH = 2
 
@@ -58,4 +60,5 @@ def afficher_joueurs(joueurs):
         print(
             f"{numero}. {joueur['nom']} | Victoires : {joueur['victoires']}"
             f" | Défaites : {joueur['defaites']} | Parties jouées : {joueur['joues']}"
+            f" | Ratio : {texte_ratio(joueur)}"
         )

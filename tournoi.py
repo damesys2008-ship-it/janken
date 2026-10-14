@@ -6,6 +6,7 @@ FORMAT_ELIMINATION = "elimination directe"
 JEUX_VALIDES = [JEU_PPC, JEU_MORPION]
 FORMATS_VALIDES = [FORMAT_ROUND_ROBIN, FORMAT_ELIMINATION]
 PARTICIPANTS_MINIMUM = 2
+PREMIER_TOUR = 1
 
 
 class TournoiAnnule(Exception):
@@ -59,7 +60,7 @@ def choisir_participants(joueurs):
     nombre = demander_nombre_participants(len(joueurs))
 
     participants = []
-    for _ in range(nombre):
+    while len(participants) < nombre:
         ajouter_participant(joueurs, participants)
     return participants
 
@@ -76,15 +77,20 @@ def demander_nombre_participants(nombre_joueurs):
     return nombre
 
 
+def deja_participant(joueur, participants):
+    """Compare par identité : deux joueurs distincts peuvent avoir le même contenu."""
+    return any(joueur is participant for participant in participants)
+
+
 def ajouter_participant(joueurs, participants):
-    """Demande un numéro de joueur et l'ajoute ; une saisie invalide consomme la tentative."""
+    """Demande un numéro de joueur et l'ajoute ; une saisie invalide n'ajoute personne."""
     try:
         indice = int(input("Choisir le numéro d'un joueur : ")) - 1
     except ValueError:
         print("Numéro invalide")
         return
 
-    if indice < 0 or indice >= len(joueurs) or joueurs[indice] in participants:
+    if indice < 0 or indice >= len(joueurs) or deja_participant(joueurs[indice], participants):
         print("Choix invalide, joueur déjà choisi ou numéro incorrect")
         return
     participants.append(joueurs[indice])
