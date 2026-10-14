@@ -32,6 +32,7 @@ def creer_tournoi(joueurs):
         "participants": participants,
         "matchs": [],
         "termine": False,
+        "champion": None,
     }
 
 

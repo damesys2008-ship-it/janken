@@ -5,13 +5,17 @@ le texte complet affiché (invites comprises) est comparé à la sortie attendue
 """
 import contextlib
 import io
+import json
+import os
 import sys
+import tempfile
 import unittest
 from unittest import mock
 
 MODULES_DU_JEU = [
     "main", "players", "Tournoi", "tournoi",
     "match_ppc", "match_morpion", "regles_ppc", "regles_morpion",
+    "resultats", "elo", "moteur_tournoi", "stockage", "historique",
 ]
 
 # ------------------------------
@@ -60,8 +64,8 @@ CLASSEMENT_ALICE_BOB = (
 
 STATISTIQUES_ALICE_BOB = (
     "\nListe des joueurs :\n"
-    "1. Alice | Victoires : 0 | Défaites : 0 | Parties jouées : 0\n"
-    "2. Bob | Victoires : 0 | Défaites : 0 | Parties jouées : 0\n"
+    "1. Alice | Victoires : 0 | Défaites : 0 | Parties jouées : 0 | Ratio : N/A\n"
+    "2. Bob | Victoires : 0 | Défaites : 0 | Parties jouées : 0 | Ratio : N/A\n"
 )
 
 BANDEAU_FIN_MORPION = (
@@ -116,7 +120,7 @@ def fin_morpion(cases, resultat):
 
 
 def tournoi_jusqu_aux_participants(nb):
-    """Sortie de la création du tournoi 'Coupe' (PPC, Round-Robin) jusqu'à la question du nombre, avec Alice et Bob."""
+    """Création du tournoi 'Coupe' (PPC, Round-Robin) avec Alice et Bob, jusqu'au nombre saisi."""
     return (
         choix_menu("2")
         + "\n===== Création d'un tournoi =====\n"
@@ -130,8 +134,17 @@ def tournoi_jusqu_aux_participants(nb):
 
 class TestParcours(unittest.TestCase):
 
+    def setUp(self):
+        dossier = tempfile.TemporaryDirectory()
+        self.addCleanup(dossier.cleanup)
+        self.chemin_donnees = os.path.join(dossier.name, "donnees.json")
+
     def lancer_le_jeu(self, reponses, secrets=()):
-        """Joue un parcours complet et renvoie tout le texte affiché."""
+        """Joue un parcours complet et renvoie tout le texte affiché.
+
+        Les données sont écrites dans un dossier temporaire, jamais dans le dépôt.
+        Plusieurs appels d'un même test partagent ce fichier (reprise de session).
+        """
         reponses = iter(reponses)
         secrets = iter(secrets)
         texte = io.StringIO()
@@ -155,7 +168,7 @@ class TestParcours(unittest.TestCase):
                 mock.patch("random.sample", lambda population, k: list(population)[:k]), \
                 contextlib.redirect_stdout(texte):
             import main
-            main.main()
+            main.main(self.chemin_donnees)
 
         self.assertEqual(list(reponses), [], "Des réponses n'ont pas été utilisées")
         self.assertEqual(list(secrets), [], "Des choix cachés n'ont pas été utilisés")
@@ -195,16 +208,16 @@ class TestParcours(unittest.TestCase):
 
         self.assertEqual(sortie, choix_menu("7") + REGLES + choix_menu("10") + AU_REVOIR)
 
-    def test_reprendre_un_tournoi_est_un_squelette(self):
+    def test_reprendre_un_tournoi_sans_tournoi(self):
         sortie = self.lancer_le_jeu(["3", "10"])
 
-        attendu = choix_menu("3") + "Reprendre tournoi (squelette)\n" + choix_menu("10") + AU_REVOIR
+        attendu = choix_menu("3") + "Aucun tournoi en cours.\n" + choix_menu("10") + AU_REVOIR
         self.assertEqual(sortie, attendu)
 
-    def test_historique_est_un_squelette(self):
+    def test_historique_sans_tournoi(self):
         sortie = self.lancer_le_jeu(["4", "10"])
 
-        attendu = choix_menu("4") + "Historique tournoi (squelette)\n" + choix_menu("10") + AU_REVOIR
+        attendu = choix_menu("4") + "Aucun tournoi terminé.\n" + choix_menu("10") + AU_REVOIR
         self.assertEqual(sortie, attendu)
 
     # ------------------------------
@@ -487,29 +500,202 @@ class TestParcours(unittest.TestCase):
 
     def test_tournoi_numero_de_joueur_non_numerique(self):
         self.verifier_tournoi_cree(
-            ["x", "1"],
+            ["x", "1", "2"],
             "Choisir le numéro d'un joueur : x\nNuméro invalide\n"
-            "Choisir le numéro d'un joueur : 1\n",
-            1,
+            "Choisir le numéro d'un joueur : 1\n"
+            "Choisir le numéro d'un joueur : 2\n",
+            2,
         )
 
     def test_tournoi_numero_de_joueur_hors_liste(self):
         self.verifier_tournoi_cree(
-            ["5", "1"],
+            ["5", "1", "2"],
             "Choisir le numéro d'un joueur : 5\n"
             "Choix invalide, joueur déjà choisi ou numéro incorrect\n"
-            "Choisir le numéro d'un joueur : 1\n",
-            1,
+            "Choisir le numéro d'un joueur : 1\n"
+            "Choisir le numéro d'un joueur : 2\n",
+            2,
         )
 
     def test_tournoi_joueur_deja_choisi(self):
         self.verifier_tournoi_cree(
-            ["1", "1"],
+            ["1", "1", "2"],
             "Choisir le numéro d'un joueur : 1\n"
             "Choisir le numéro d'un joueur : 1\n"
-            "Choix invalide, joueur déjà choisi ou numéro incorrect\n",
-            1,
+            "Choix invalide, joueur déjà choisi ou numéro incorrect\n"
+            "Choisir le numéro d'un joueur : 2\n",
+            2,
         )
+
+    # ------------------------------
+    # ELO après une partie         |
+    # ------------------------------
+
+    def test_partie_ppc_puis_classement(self):
+        sortie = self.lancer_le_jeu(REPONSES_ALICE_BOB + ["8", "5", "10"], ["p", "c"])
+
+        classement = (
+            "\n==============================\n"
+            "        CLASSEMENT ELO\n"
+            "==============================\n"
+            "Nom             ELO    Victoires Défaites\n"
+            "------------------------------\n"
+            "Alice           1050   1         0       \n"
+            "Bob             950    0         1       \n"
+            "==============================\n\n"
+        )
+        self.assertIn("Le gagnant est : Alice\n" + choix_menu("5") + classement, sortie)
+
+    # ------------------------------
+    # Tournois : création, reprise |
+    # ------------------------------
+
+    REPONSES_TOURNOI_PPC = ["2", "Coupe", "ppc", "Round-Robin", "2", "1", "2"]
+
+    def test_tournoi_cree_puis_repris_jusqu_au_champion(self):
+        reponses = REPONSES_ALICE_BOB + self.REPONSES_TOURNOI_PPC + ["3", "1", "10"]
+
+        sortie = self.lancer_le_jeu(reponses, ["p", "c"])
+
+        self.assertIn("1. Coupe (ppc - Round-Robin) [0/0]\n", sortie)
+        self.assertIn("Alice contre Bob\n", sortie)
+        self.assertIn("Alice a choisi pierre\nBob a choisi ciseaux\n", sortie)
+        self.assertTrue(sortie.endswith("Champion : Alice\n" + choix_menu("10") + AU_REVOIR))
+
+    def test_tournoi_termine_n_est_plus_a_reprendre(self):
+        reponses = REPONSES_ALICE_BOB + self.REPONSES_TOURNOI_PPC + ["3", "1", "3", "10"]
+
+        sortie = self.lancer_le_jeu(reponses, ["p", "c"])
+
+        attendu_fin = "Aucun tournoi en cours.\n" + choix_menu("10") + AU_REVOIR
+        self.assertTrue(sortie.endswith(attendu_fin))
+
+    def test_reprendre_avec_un_numero_invalide(self):
+        reponses = REPONSES_ALICE_BOB + self.REPONSES_TOURNOI_PPC + ["3", "9", "10"]
+
+        sortie = self.lancer_le_jeu(reponses)
+
+        attendu_fin = (
+            choix_menu("3") + "1. Coupe (ppc - Round-Robin) [0/0]\n"
+            "Numéro du tournoi à reprendre : 9\n"
+            "Choix invalide.\n" + choix_menu("10") + AU_REVOIR
+        )
+        self.assertTrue(sortie.endswith(attendu_fin))
+
+    def test_historique_avec_detail_d_un_tournoi(self):
+        reponses = REPONSES_ALICE_BOB + self.REPONSES_TOURNOI_PPC + ["3", "1", "4", "1", "10"]
+
+        sortie = self.lancer_le_jeu(reponses, ["p", "c"])
+
+        attendu_fin = (
+            choix_menu("4")
+            + "1. Coupe (ppc - Round-Robin) - champion : Alice\n"
+            "Numéro du tournoi à détailler (vide pour revenir) : 1\n"
+            "Tournoi : Coupe\n"
+            "Jeu : ppc\n"
+            "Format : Round-Robin\n"
+            "Participants : Alice, Bob\n"
+            "Matchs :\n"
+            "  Tour 1 :\n"
+            "    - Alice bat Bob\n"
+            "Champion : Alice\n"
+            + choix_menu("10") + AU_REVOIR
+        )
+        self.assertTrue(sortie.endswith(attendu_fin))
+
+    def test_historique_detail_vide_revient_au_menu(self):
+        reponses = REPONSES_ALICE_BOB + self.REPONSES_TOURNOI_PPC + ["3", "1", "4", "", "10"]
+
+        sortie = self.lancer_le_jeu(reponses, ["p", "c"])
+
+        attendu_fin = (
+            "Numéro du tournoi à détailler (vide pour revenir) : \n"
+            + choix_menu("10") + AU_REVOIR
+        )
+        self.assertTrue(sortie.endswith(attendu_fin))
+
+    def test_elimination_a_trois_joueurs_au_morpion(self):
+        victoire_de_x = ["1", "4", "2", "5", "3"]
+        reponses = (
+            ["1", "Alice", "1", "Bob", "1", "Carl", "2"]
+            + ["2", "Coupe", "morpion", "Elimination directe", "3", "1", "2", "3"]
+            + ["3", "1"] + victoire_de_x + victoire_de_x
+            + ["4", "1", "10"]
+        )
+
+        sortie = self.lancer_le_jeu(reponses)
+
+        self.assertIn("Alice contre Bob\n", sortie)
+        self.assertIn("Alice contre Carl\n", sortie)
+        self.assertIn("Champion : Alice\n", sortie)
+        self.assertIn("    - Alice bat Carl\n", sortie)
+        self.assertIn("Tour 2 : Alice bat Carl\n", sortie)
+        self.assertTrue(sortie.endswith(choix_menu("10") + AU_REVOIR))
+
+    # ------------------------------
+    # Persistance                  |
+    # ------------------------------
+
+    def test_les_joueurs_sont_retrouves_au_lancement_suivant(self):
+        self.lancer_le_jeu(REPONSES_ALICE_BOB + ["10"])
+
+        sortie = self.lancer_le_jeu(["6", "10"])
+
+        attendu = choix_menu("6") + STATISTIQUES_ALICE_BOB + choix_menu("10") + AU_REVOIR
+        self.assertEqual(sortie, attendu)
+
+    def test_elo_et_tournoi_sont_retrouves_au_lancement_suivant(self):
+        reponses = REPONSES_ALICE_BOB + self.REPONSES_TOURNOI_PPC + ["3", "1", "10"]
+        self.lancer_le_jeu(reponses, ["p", "c"])
+
+        sortie = self.lancer_le_jeu(["4", "", "5", "10"])
+
+        self.assertIn("1. Coupe (ppc - Round-Robin) - champion : Alice\n", sortie)
+        self.assertIn("Alice           1050   1         0", sortie)
+
+    def test_fichier_illisible_est_mis_de_cote_et_le_jeu_repart_a_vide(self):
+        with open(self.chemin_donnees, "w", encoding="utf-8") as fichier:
+            fichier.write("ceci n'est pas du json")
+
+        sortie = self.lancer_le_jeu(["6", "10"])
+
+        self.assertIn("Données illisibles, démarrage à vide : ", sortie)
+        self.assertIn(AUCUN_JOUEUR + choix_menu("10"), sortie)
+        self.assertFalse(os.path.exists(self.chemin_donnees))
+        with open(self.chemin_donnees + ".illisible", encoding="utf-8") as fichier:
+            self.assertEqual(fichier.read(), "ceci n'est pas du json")
+
+    def test_fichier_illisible_ne_remplace_pas_un_fichier_deja_mis_de_cote(self):
+        for contenu in ("premier", "second"):
+            with open(self.chemin_donnees, "w", encoding="utf-8") as fichier:
+                fichier.write(contenu)
+            self.lancer_le_jeu(["10"])
+
+        for suffixe, contenu in ((".illisible", "premier"), (".illisible2", "second")):
+            with open(self.chemin_donnees + suffixe, encoding="utf-8") as fichier:
+                self.assertEqual(fichier.read(), contenu)
+
+    def test_tournoi_d_un_jeu_inconnu_dans_le_fichier_ne_plante_pas(self):
+        joueur = {"nom": "Alice", "type": "humain", "elo": 1000, "joues": 0,
+                  "victoires": 0, "defaites": 0, "historique": []}
+        tournoi = {"nom": "Coupe", "jeu": "dames", "format": "round-robin", "participants": [0, 0],
+                   "matchs": [], "termine": False, "champion": None}
+        with open(self.chemin_donnees, "w", encoding="utf-8") as fichier:
+            json.dump({"joueurs": [joueur], "tournois": [tournoi]}, fichier)
+
+        sortie = self.lancer_le_jeu(["3", "1", "10"])
+
+        self.assertIn("Jeu inconnu : 'dames'\n" + choix_menu("10") + AU_REVOIR, sortie)
+
+    def test_echec_de_sauvegarde_n_arrete_pas_le_jeu(self):
+        dossier_absent = os.path.join(os.path.dirname(self.chemin_donnees), "absent")
+        self.chemin_donnees = os.path.join(dossier_absent, "donnees.json")
+
+        sortie = self.lancer_le_jeu(REPONSES_ALICE_BOB + ["6", "10"])
+
+        self.assertIn("Sauvegarde impossible : ", sortie)
+        self.assertIn(STATISTIQUES_ALICE_BOB, sortie)
+        self.assertTrue(sortie.endswith(AU_REVOIR))
 
 
 if __name__ == "__main__":
