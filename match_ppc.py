@@ -1,6 +1,7 @@
 import getpass
 import random
 from players import joueurs
+from regles_ppc import EGALITE, PREMIER_GAGNE, determiner_gagnant
 
 def demander_choix(nom_joueur):
     """Demande le choix d'un joueur (p/f/c), caché à l'écran"""
@@ -16,14 +17,18 @@ def jouer_match_ppc():
         print("Il faut au moins 2 joueurs pour jouer.")
         return
 
-    print("***** Choisissez les joueurs *****")
-    for i, joueur in enumerate(joueurs):
-        print(f"{i+1}. {joueur['nom']}")
+    premier, second = random.sample(joueurs, 2)
+    print(f"{premier['nom']} affronte {second['nom']} !")
 
-    n = random.choice(joueurs)
-    print(n)
+    choix_premier = demander_choix(premier['nom'])
+    choix_second = demander_choix(second['nom'])
+    print(f"{premier['nom']} a choisi {choix_premier}")
+    print(f"{second['nom']} a choisi {choix_second}")
 
-    print(demander_choix(joueurs[1]))
-
-
-    
+    resultat = determiner_gagnant(choix_premier, choix_second)
+    if resultat == EGALITE:
+        print("Égalité !")
+    elif resultat == PREMIER_GAGNE:
+        print(f"Le gagnant est : {premier['nom']}")
+    else:
+        print(f"Le gagnant est : {second['nom']}")

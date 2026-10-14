@@ -3,6 +3,7 @@
 # ------------------------------
 import random
 import getpass
+from regles_ppc import PREMIER_GAGNE, determiner_gagnant
 
 # ------------------------------
 # PLAYERS
@@ -129,11 +130,7 @@ def jouer_match_ppc():
         return
 
     # Détermination du gagnant
-    gagne = (
-        (c_premier == "pierre" and c_second == "ciseaux") or
-        (c_premier == "ciseaux" and c_second == "feuille") or
-        (c_premier == "feuille" and c_second == "pierre")
-    )
+    gagne = determiner_gagnant(c_premier, c_second) == PREMIER_GAGNE
 
     if gagne:
         premier["victoires"] += 1
