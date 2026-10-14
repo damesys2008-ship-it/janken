@@ -1,7 +1,8 @@
 import getpass
 import random
 from players import JOUEURS_MINIMUM_PAR_MATCH
-from regles_ppc import EGALITE, PREMIER_GAGNE, determiner_gagnant
+from regles_ppc import determiner_gagnant
+from resultats import texte_resultat
 
 CHOIX_PAR_TOUCHE = {"p": "pierre", "f": "feuille", "c": "ciseaux"}
 
@@ -15,14 +16,18 @@ def demander_choix(nom_joueur):
         print("Choix invalide. Tape p, f ou c.")
 
 
-def annoncer_resultat(premier, second, resultat):
-    """Affiche l'égalité ou le nom du gagnant."""
-    if resultat == EGALITE:
-        print("Égalité !")
-    elif resultat == PREMIER_GAGNE:
-        print(f"Le gagnant est : {premier['nom']}")
-    else:
-        print(f"Le gagnant est : {second['nom']}")
+def jouer_partie_ppc(joueur1, joueur2):
+    """Joue une partie entre deux joueurs donnés et renvoie le résultat (cf. resultats.py)."""
+    print(f"{joueur1['nom']} affronte {joueur2['nom']} !")
+
+    choix_joueur1 = demander_choix(joueur1['nom'])
+    choix_joueur2 = demander_choix(joueur2['nom'])
+    print(f"{joueur1['nom']} a choisi {choix_joueur1}")
+    print(f"{joueur2['nom']} a choisi {choix_joueur2}")
+
+    resultat = determiner_gagnant(choix_joueur1, choix_joueur2)
+    print(texte_resultat(resultat, joueur1, joueur2))
+    return resultat
 
 
 def jouer_match_ppc(joueurs):
@@ -32,12 +37,4 @@ def jouer_match_ppc(joueurs):
         return
 
     premier, second = random.sample(joueurs, 2)
-    print(f"{premier['nom']} affronte {second['nom']} !")
-
-    choix_premier = demander_choix(premier['nom'])
-    choix_second = demander_choix(second['nom'])
-    print(f"{premier['nom']} a choisi {choix_premier}")
-    print(f"{second['nom']} a choisi {choix_second}")
-
-    resultat = determiner_gagnant(choix_premier, choix_second)
-    annoncer_resultat(premier, second, resultat)
+    jouer_partie_ppc(premier, second)

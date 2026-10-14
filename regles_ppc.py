@@ -1,6 +1,4 @@
-PREMIER_GAGNE = "premier_gagne"
-SECOND_GAGNE = "second_gagne"
-EGALITE = "egalite"
+from resultats import EGALITE, PREMIER_GAGNE, SECOND_GAGNE
 
 # Chaque choix est associé au choix qu'il bat
 CHOIX_QUE_BAT = {

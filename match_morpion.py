@@ -1,5 +1,6 @@
 from players import JOUEURS_MINIMUM_PAR_MATCH
 from regles_morpion import CASE_VIDE, NOMBRE_DE_CASES, trouver_gagnant
+from resultats import EGALITE, PREMIER_GAGNE, SECOND_GAGNE, texte_resultat
 
 MARQUE_PREMIER_JOUEUR = "X"
 MARQUE_SECOND_JOUEUR = "O"
@@ -53,21 +54,36 @@ def demander_case(grille, nom):
         return case
 
 
-def associer_noms_aux_marques(joueurs):
-    """Le premier joueur de la liste joue X, le second joue O."""
-    return {
-        MARQUE_PREMIER_JOUEUR: joueurs[0]["nom"],
-        MARQUE_SECOND_JOUEUR: joueurs[1]["nom"],
-    }
-
-
-def resultat_de_la_partie(grille, nom_dernier_joueur):
-    """Renvoie le message de fin si la partie est terminée, sinon None."""
+def resultat_de_la_partie(grille, marque_actuelle):
+    """Renvoie le résultat si la partie est terminée, sinon None."""
     if trouver_gagnant(grille) is not None:
-        return f"Le gagnant est : {nom_dernier_joueur}"
+        if marque_actuelle == MARQUE_PREMIER_JOUEUR:
+            return PREMIER_GAGNE
+        return SECOND_GAGNE
     if CASE_VIDE not in grille:
-        return "Égalité !"
+        return EGALITE
     return None
+
+
+def jouer_partie_morpion(joueur1, joueur2):
+    """Joue une partie (X = joueur1, O = joueur2) et renvoie le résultat (cf. resultats.py)."""
+    noms_par_marque = {
+        MARQUE_PREMIER_JOUEUR: joueur1["nom"],
+        MARQUE_SECOND_JOUEUR: joueur2["nom"],
+    }
+    grille = [CASE_VIDE] * NOMBRE_DE_CASES
+    marque_actuelle = MARQUE_PREMIER_JOUEUR
+
+    while True:
+        case = demander_case(grille, noms_par_marque[marque_actuelle])
+        grille[case] = marque_actuelle
+
+        resultat = resultat_de_la_partie(grille, marque_actuelle)
+        if resultat is not None:
+            annoncer_fin(grille, texte_resultat(resultat, joueur1, joueur2))
+            return resultat
+
+        marque_actuelle = marque_suivante(marque_actuelle)
 
 
 def jouer_match_morpion(joueurs):
@@ -76,18 +92,4 @@ def jouer_match_morpion(joueurs):
         print(f"Il faut au moins {JOUEURS_MINIMUM_PAR_MATCH} joueurs.")
         return
 
-    grille = [CASE_VIDE] * NOMBRE_DE_CASES
-    noms_par_marque = associer_noms_aux_marques(joueurs)
-    marque_actuelle = MARQUE_PREMIER_JOUEUR
-
-    while True:
-        nom_actuel = noms_par_marque[marque_actuelle]
-        case = demander_case(grille, nom_actuel)
-        grille[case] = marque_actuelle
-
-        resultat = resultat_de_la_partie(grille, nom_actuel)
-        if resultat is not None:
-            annoncer_fin(grille, resultat)
-            return
-
-        marque_actuelle = marque_suivante(marque_actuelle)
+    jouer_partie_morpion(joueurs[0], joueurs[1])

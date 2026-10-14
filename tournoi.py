@@ -1,5 +1,10 @@
-JEUX_VALIDES = ["ppc", "morpion"]
-FORMATS_VALIDES = ["round-robin", "elimination directe"]
+JEU_PPC = "ppc"
+JEU_MORPION = "morpion"
+FORMAT_ROUND_ROBIN = "round-robin"
+FORMAT_ELIMINATION = "elimination directe"
+
+JEUX_VALIDES = [JEU_PPC, JEU_MORPION]
+FORMATS_VALIDES = [FORMAT_ROUND_ROBIN, FORMAT_ELIMINATION]
 PARTICIPANTS_MINIMUM = 2
 
 
