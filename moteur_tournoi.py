@@ -1,22 +1,21 @@
 from itertools import combinations
 
-from elo import appliquer_resultat
+from elo import RESULTATS_VALIDES, appliquer_resultat
 from resultats import EGALITE, PREMIER_GAGNE, SECOND_GAGNE
-from tournoi import FORMAT_ELIMINATION, FORMAT_ROUND_ROBIN, PARTICIPANTS_MINIMUM
-
-RESULTATS_VALIDES = (PREMIER_GAGNE, SECOND_GAGNE, EGALITE)
-PREMIER_TOUR = 1
+from tournoi import FORMAT_ELIMINATION, FORMAT_ROUND_ROBIN, PARTICIPANTS_MINIMUM, PREMIER_TOUR
 
 
 def jouer_tournoi(tournoi, jouer_partie, apres_match):
     """Joue les matchs restants du tournoi, jusqu'au champion.
+
+    Attention : `apres_match` est appelé AVANT que `termine` et `champion` soient renseignés,
+    donc l'appelant doit sauvegarder une dernière fois quand cette fonction rend la main.
 
     - `jouer_partie(joueur1, joueur2)` joue une partie et renvoie une constante de resultats.py ;
     - `apres_match(tournoi)` est appelé après chaque match enregistré (par ex. pour sauvegarder).
 
     L'état se déduit des clés du tournoi : on peut relancer un tournoi interrompu,
     il reprend au premier match dont le résultat est None.
-    L'appelant sauvegarde lui-même le tournoi une fois la fonction terminée.
     Lève ValueError s'il y a moins de 2 participants ou si le format est inconnu.
     """
     if len(tournoi["participants"]) < PARTICIPANTS_MINIMUM:
@@ -115,7 +114,7 @@ def _avancer_elimination(tournoi):
         return
 
     tour = tournoi["matchs"][-1]["tour"]
-    derniers = _derniers_matchs_du_tour(tournoi, tour)
+    derniers = derniers_matchs_du_tour(tournoi["matchs"], tour)
     nuls = [match for match in derniers if match["resultat"] == EGALITE]
     if nuls:
         print("Match nul : on rejoue.")
@@ -137,10 +136,10 @@ def _ajouter_tour(tournoi, tour, joueurs):
         tournoi["matchs"].append(_creer_match(joueur1, joueur2, tour))
 
 
-def _derniers_matchs_du_tour(tournoi, tour):
+def derniers_matchs_du_tour(matchs, tour):
     """Le dernier match de chaque paire du tour : un nul rejoué ne compte que par son rejeu."""
     derniers = {}
-    for match in tournoi["matchs"]:
+    for match in matchs:
         if match["tour"] == tour:
             derniers[(id(match["joueur1"]), id(match["joueur2"]))] = match
     return list(derniers.values())
@@ -150,7 +149,7 @@ def _joueurs_en_lice(tournoi, tour):
     """Les joueurs qui jouent ce tour, déduits des résultats des tours précédents."""
     en_lice = list(tournoi["participants"])
     for tour_precedent in range(PREMIER_TOUR, tour):
-        derniers = _derniers_matchs_du_tour(tournoi, tour_precedent)
+        derniers = derniers_matchs_du_tour(tournoi["matchs"], tour_precedent)
         en_lice = _qualifies(en_lice, derniers)
     return en_lice
 

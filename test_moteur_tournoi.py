@@ -157,6 +157,18 @@ class TestElimination(unittest.TestCase):
         self.assertEqual(noms_du_match(tournoi["matchs"][3]), ("A", "E"))
         self.assertIs(tournoi["champion"], joueurs[0])
 
+    def test_six_joueurs_un_qualifie_d_office_au_tour_intermediaire(self):
+        joueurs = creer_joueurs("ABCDEF")
+        tournoi = creer_tournoi(joueurs, "elimination directe")
+
+        jouer(tournoi)
+
+        matchs = tournoi["matchs"]
+        self.assertEqual([match["tour"] for match in matchs], [1, 1, 1, 2, 3])
+        self.assertEqual(noms_du_match(matchs[3]), ("A", "C"))  # E n'a pas d'adversaire au tour 2
+        self.assertEqual(noms_du_match(matchs[4]), ("A", "E"))  # E rejoint la finale
+        self.assertIs(tournoi["champion"], joueurs[0])
+
     def test_le_dernier_qualifie_d_office_peut_gagner(self):
         joueurs = creer_joueurs("ABC")
         tournoi = creer_tournoi(joueurs, "elimination directe")
