@@ -61,7 +61,6 @@ Le projet est réalisé dans un cadre pédagogique et respecte une planification
 ## 🧠 Architecture et choix techniques
 - **Langage** : Python 
 - **Interface** : Console / terminal
-- ---
 
 ## 🛠️ Outils et technologies utilisés
 
@@ -86,4 +85,10 @@ Le projet est réalisé dans un cadre pédagogique et respecte une planification
 
 Depuis la racine du projet :
 ```bash
-python src/fonctionprincipale.py
+python main.py
+```
+
+Lancer les tests :
+```bash
+python -m unittest -v
+```
